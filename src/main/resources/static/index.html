@@ -813,37 +813,41 @@
 
     // Initialize
     async function init() {
-      if (!sessionId) {
-        const resp = await fetch('/api/session', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({})
-        });
-        const data = await resp.json();
-        sessionId = data.sessionId;
-        localStorage.setItem('sessionId', sessionId);
-      } else {
-        // Verify session exists
-        try {
-          const resp = await fetch(`/api/apikey/${sessionId}`);
-          if (resp.ok) {
-            const data = await resp.json();
-            apiKey = data.apiKey || '';
-            provider = data.provider || 'minimax';
+      try {
+        if (!sessionId) {
+          const resp = await fetch('/api/session', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({})
+          });
+          const data = await resp.json();
+          sessionId = data.sessionId;
+          localStorage.setItem('sessionId', sessionId);
+        } else {
+          // Verify session exists
+          try {
+            const resp = await fetch(`/api/apikey/${sessionId}`);
+            if (resp.ok) {
+              const data = await resp.json();
+              apiKey = data.apiKey || '';
+              provider = data.provider || 'minimax';
+            }
+          } catch (e) {
+            // Session invalid, create new one
+            sessionId = '';
+            localStorage.removeItem('sessionId');
           }
-        } catch (e) {
-          // Session invalid, create new one
-          sessionId = '';
-          init();
-          return;
         }
-      }
 
-      await loadHistory();
+        await loadHistory();
+      } catch (e) {
+        console.error('Init failed:', e);
+      }
       updateTabVisibility();
     }
 
     async function loadHistory() {
+      if (!sessionId) return;
       try {
         const resp = await fetch(`/api/history/${sessionId}`);
         if (resp.ok) {
@@ -1142,8 +1146,16 @@
         });
 
         if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          throw new Error(errorData.error?.message || `请求失败 (${response.status})`);
+          let errorMsg = `请求失败 (${response.status})`;
+          try {
+            const errorData = await response.json();
+            if (errorData.error) {
+              errorMsg = errorData.error;
+            }
+          } catch (e) {
+            // response not JSON
+          }
+          throw new Error(errorMsg);
         }
 
         const data = await response.json();

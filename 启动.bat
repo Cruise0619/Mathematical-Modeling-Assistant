@@ -19,12 +19,20 @@ if not exist "target\assistant-1.0.0.jar" (
 
 :: Kill existing process on port 8080
 echo [INFO] Checking for existing processes on port 8080...
-for /f "tokens=5" %%a in ('netstat -ano ^| findstr :8080 ^| findstr LISTENING') do (
+for /f "tokens=5" %%a in ('netstat -ano ^| findstr :8080 ^| findstr LISTENING ^| findstr /v "0.0.0.0"') do (
     echo [INFO] Stopping existing process %%a
-    taskkill //F //PID %%a >nul 2>&1
+    taskkill //F //PID %%a 2>nul
 )
 
-:: Wait for port to be released
+:: Also try WMIC method to find and kill Java processes
+for /f "skip=2 tokens=1" %%a in ('wmic process where "name like 'java%%' and commandline like '%%assistant-1.0.0%%'" get processid 2^nul') do (
+    if not "%%a"=="" (
+        echo [INFO] Stopping Java process %%a...
+        taskkill //F //PID %%a 2>nul
+    )
+)
+
+:: Wait for port to be released (max 15 seconds)
 echo [INFO] Waiting for port 8080 to be released...
 set /a counter=0
 :wait_loop
@@ -32,11 +40,11 @@ timeout /t 1 >nul
 set /a counter+=1
 netstat -ano | findstr :8080 | findstr LISTENING >nul 2>&1
 if not errorlevel 1 (
-    if %counter% LSS 10 goto wait_loop
+    if %counter% LSS 15 goto wait_loop
 )
 netstat -ano | findstr :8080 | findstr LISTENING >nul 2>&1
 if not errorlevel 1 (
-    echo [WARN] Port 8080 still in use, trying anyway...
+    echo [WARN] Port 8080 still in use, will attempt to start anyway...
 ) else (
     echo [INFO] Port 8080 is free.
 )

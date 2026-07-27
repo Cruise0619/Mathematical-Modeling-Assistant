@@ -59,6 +59,7 @@ public class MinimaxService implements AiService {
 
     private String parseResponse(String response) {
         try {
+            log.info("Minimax API 原始响应: {}", response);
             JsonNode root = objectMapper.readTree(response);
             JsonNode choices = root.path("choices");
             if (choices.isArray() && choices.size() > 0) {

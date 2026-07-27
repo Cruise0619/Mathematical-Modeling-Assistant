@@ -53,6 +53,8 @@ public class ConversationService {
 
     @Transactional
     public Conversation sendMessage(String sessionId, String userInput, String imageData, String wordContent, String apiKey, String provider) {
+        log.info("sendMessage called - sessionId: {}, provider: {}, hasApiKey: {}", sessionId, provider, apiKey != null && !apiKey.isEmpty());
+
         Conversation conversation = new Conversation();
         conversation.setSessionId(sessionId);
         conversation.setUserInput(userInput);
@@ -61,8 +63,10 @@ public class ConversationService {
         conversationRepository.save(conversation);
 
         String userMessage = buildUserMessage(userInput, imageData, wordContent);
+        log.info("Calling AI service - provider: {}", provider);
         AiService aiService = aiServiceFactory.getService(provider);
         String aiResponse = aiService.chat(apiKey, SYSTEM_PROMPT, userMessage);
+        log.info("AI service returned response length: {}", aiResponse != null ? aiResponse.length() : 0);
 
         conversation.setAiResponse(aiResponse);
         conversationRepository.save(conversation);
