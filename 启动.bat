@@ -44,3 +44,10 @@ echo [INFO] ========================================
 echo.
 
 java -jar "%~dp0target\assistant-1.0.0.jar"
+
+:: Keep window open after Java exits
+echo.
+echo [INFO] ========================================
+echo [INFO] Server stopped.
+echo [INFO] Press any key to exit...
+pause >nul
