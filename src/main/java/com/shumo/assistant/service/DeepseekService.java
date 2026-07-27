@@ -57,7 +57,12 @@ public class DeepseekService implements AiService {
             return parseResponse(response);
         } catch (Exception e) {
             log.error("Deepseek API call failed", e);
-            throw new RuntimeException("AI service call failed: " + e.getMessage());
+            String msg = e.getMessage();
+            // Try to extract error message from response
+            if (msg.contains("401") || msg.contains("403") || msg.contains("invalid")) {
+                throw new RuntimeException("API 认证失败：请检查 API Key 是否正确");
+            }
+            throw new RuntimeException("AI 服务调用失败: " + msg);
         }
     }
 

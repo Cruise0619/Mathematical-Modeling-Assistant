@@ -1,7 +1,16 @@
 @echo off
 title Stop Math Modeling Assistant
-netstat -ano | findstr :8080 | findstr LISTENING > tmp.txt
-for /f "tokens=5" %a in (tmp.txt) do taskkill //F //PID %a
-del tmp.txt
-echo Stopped
-timeout /t 1 >nul
+
+echo [INFO] Stopping Math Modeling Assistant...
+
+:: Kill processes on port 8080
+for /f "tokens=5" %%a in ('netstat -ano ^| findstr :8080 ^| findstr LISTENING') do (
+    echo [INFO] Stopping process %%a
+    taskkill //F //PID %%a >nul 2>&1
+)
+
+:: Clean lock files
+if exist "data\shumodb.lock.db" del "data\shumodb.lock.db" >nul 2>&1
+
+echo [OK] Server stopped
+timeout /t 2 >nul

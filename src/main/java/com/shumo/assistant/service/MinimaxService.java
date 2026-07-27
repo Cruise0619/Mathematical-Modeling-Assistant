@@ -49,7 +49,11 @@ public class MinimaxService implements AiService {
             return parseResponse(response);
         } catch (Exception e) {
             log.error("Minimax API 调用失败", e);
-            throw new RuntimeException("AI 服务调用失败: " + e.getMessage());
+            String msg = e.getMessage();
+            if (msg.contains("401") || msg.contains("403") || msg.contains("invalid")) {
+                throw new RuntimeException("API 认证失败：请检查 API Key 是否正确");
+            }
+            throw new RuntimeException("AI 服务调用失败: " + msg);
         }
     }
 
