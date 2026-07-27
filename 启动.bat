@@ -1,5 +1,5 @@
 @echo off
-title Math Modeling Assistant - Starting...
+title Math Modeling Assistant
 cd /d "%~dp0"
 
 :: Check Java
@@ -23,10 +23,16 @@ for /f "tokens=5" %%a in ('netstat -ano ^| findstr :8080 ^| findstr LISTENING') 
     echo [INFO] Stopping existing process %%a
     taskkill //F //PID %%a >nul 2>&1
 )
-timeout /t 1 >nul
+timeout /t 2 >nul
 
-:: Clean database locks
-if exist "data\shumodb.lock.db" del "data\shumodb.lock.db" >nul 2>&1
+:: Clean database lock files
+echo [INFO] Cleaning database locks...
+if exist "data\shumodb.lock.db" del /f /q "data\shumodb.lock.db" >nul 2>&1
+if exist "data\shumodb.mv.db" (
+    attrib -r "data\shumodb.mv.db" >nul 2>&1
+    del /f /q "data\shumodb.mv.db" >nul 2>&1
+)
+if exist "data\shumodb.trace.db" del /f /q "data\shumodb.trace.db" >nul 2>&1
 
 :: Start server with console output
 echo [INFO] ========================================
