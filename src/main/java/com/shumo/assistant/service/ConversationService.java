@@ -30,7 +30,7 @@ public class ConversationService {
 
     private final ConversationRepository conversationRepository;
     private final UserSessionRepository userSessionRepository;
-    private final MinimaxService minimaxService;
+    private final AiServiceFactory aiServiceFactory;
 
     public String getOrCreateSession(String sessionId) {
         if (sessionId == null || sessionId.isEmpty()) {
@@ -52,7 +52,7 @@ public class ConversationService {
     }
 
     @Transactional
-    public Conversation sendMessage(String sessionId, String userInput, String imageData, String wordContent, String apiKey) {
+    public Conversation sendMessage(String sessionId, String userInput, String imageData, String wordContent, String apiKey, String provider) {
         Conversation conversation = new Conversation();
         conversation.setSessionId(sessionId);
         conversation.setUserInput(userInput);
@@ -61,13 +61,15 @@ public class ConversationService {
         conversationRepository.save(conversation);
 
         String userMessage = buildUserMessage(userInput, imageData, wordContent);
-        String aiResponse = minimaxService.chat(apiKey, SYSTEM_PROMPT, userMessage);
+        AiService aiService = aiServiceFactory.getService(provider);
+        String aiResponse = aiService.chat(apiKey, SYSTEM_PROMPT, userMessage);
 
         conversation.setAiResponse(aiResponse);
         conversationRepository.save(conversation);
 
         userSessionRepository.findBySessionId(sessionId).ifPresent(session -> {
             session.setApiKey(apiKey);
+            session.setProvider(provider);
             userSessionRepository.save(session);
         });
 
@@ -95,6 +97,11 @@ public class ConversationService {
     public Optional<String> getApiKey(String sessionId) {
         return userSessionRepository.findBySessionId(sessionId)
                 .map(UserSession::getApiKey);
+    }
+
+    public Optional<String> getProvider(String sessionId) {
+        return userSessionRepository.findBySessionId(sessionId)
+                .map(UserSession::getProvider);
     }
 
     @Transactional

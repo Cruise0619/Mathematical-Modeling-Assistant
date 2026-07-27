@@ -19,12 +19,18 @@ public class UserSession {
     @Column(name = "api_key", columnDefinition = "TEXT")
     private String apiKey;
 
+    @Column(name = "provider")
+    private String provider = "minimax";
+
     @Column(name = "last_active")
     private LocalDateTime lastActive;
 
     @PrePersist
     protected void onCreate() {
         lastActive = LocalDateTime.now();
+        if (provider == null) {
+            provider = "minimax";
+        }
     }
 
     @PreUpdate

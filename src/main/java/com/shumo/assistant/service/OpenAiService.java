@@ -9,15 +9,16 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 import java.time.Duration;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class MinimaxService implements AiService {
+public class OpenAiService implements AiService {
 
-    private static final String API_URL = "https://api.minimax.chat/v1/text/chatcompletion_v2";
-    private static final String MODEL = "MiniMax-Text-01";
+    private static final String API_URL = "https://api.openai.com/v1/chat/completions";
+    private static final String MODEL = "gpt-4o";
 
     private final WebClient webClient;
     private final ObjectMapper objectMapper;
@@ -27,13 +28,20 @@ public class MinimaxService implements AiService {
         Map<String, Object> requestBody = new HashMap<>();
         requestBody.put("model", MODEL);
         requestBody.put("max_tokens", 4096);
-        requestBody.put("system", systemPrompt);
 
-        Map<String, String> message = new HashMap<>();
-        message.put("role", "user");
-        message.put("content", userMessage);
+        List<Map<String, String>> messages = new java.util.ArrayList<>();
 
-        requestBody.put("messages", new Map[]{message});
+        Map<String, String> systemMsg = new HashMap<>();
+        systemMsg.put("role", "system");
+        systemMsg.put("content", systemPrompt);
+
+        Map<String, String> userMsg = new HashMap<>();
+        userMsg.put("role", "user");
+        userMsg.put("content", userMessage);
+
+        messages.add(systemMsg);
+        messages.add(userMsg);
+        requestBody.put("messages", messages);
 
         try {
             String response = webClient.post()
@@ -48,9 +56,14 @@ public class MinimaxService implements AiService {
 
             return parseResponse(response);
         } catch (Exception e) {
-            log.error("Minimax API 调用失败", e);
-            throw new RuntimeException("AI 服务调用失败: " + e.getMessage());
+            log.error("OpenAI API call failed", e);
+            throw new RuntimeException("AI service call failed: " + e.getMessage());
         }
+    }
+
+    @Override
+    public String getProviderName() {
+        return "openai";
     }
 
     private String parseResponse(String response) {
@@ -60,15 +73,10 @@ public class MinimaxService implements AiService {
             if (choices.isArray() && choices.size() > 0) {
                 return choices.get(0).path("message").path("content").asText();
             }
-            return "未获取到有效响应";
+            return "No valid response";
         } catch (Exception e) {
-            log.error("解析响应失败: {}", response, e);
-            throw new RuntimeException("解析 AI 响应失败");
+            log.error("Failed to parse response: {}", response, e);
+            throw new RuntimeException("Failed to parse AI response");
         }
-    }
-
-    @Override
-    public String getProviderName() {
-        return "minimax";
     }
 }

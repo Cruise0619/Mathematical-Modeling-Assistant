@@ -14,10 +14,10 @@ import java.util.Map;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class MinimaxService implements AiService {
+public class ClaudeService implements AiService {
 
-    private static final String API_URL = "https://api.minimax.chat/v1/text/chatcompletion_v2";
-    private static final String MODEL = "MiniMax-Text-01";
+    private static final String API_URL = "https://api.anthropic.com/v1/messages";
+    private static final String MODEL = "claude-3-5-sonnet-20241022";
 
     private final WebClient webClient;
     private final ObjectMapper objectMapper;
@@ -40,6 +40,8 @@ public class MinimaxService implements AiService {
                     .uri(API_URL)
                     .header("Authorization", "Bearer " + apiKey)
                     .header("Content-Type", "application/json")
+                    .header("x-api-key", apiKey)
+                    .header("anthropic-version", "2023-06-01")
                     .bodyValue(requestBody)
                     .retrieve()
                     .bodyToMono(String.class)
@@ -48,27 +50,27 @@ public class MinimaxService implements AiService {
 
             return parseResponse(response);
         } catch (Exception e) {
-            log.error("Minimax API 调用失败", e);
-            throw new RuntimeException("AI 服务调用失败: " + e.getMessage());
-        }
-    }
-
-    private String parseResponse(String response) {
-        try {
-            JsonNode root = objectMapper.readTree(response);
-            JsonNode choices = root.path("choices");
-            if (choices.isArray() && choices.size() > 0) {
-                return choices.get(0).path("message").path("content").asText();
-            }
-            return "未获取到有效响应";
-        } catch (Exception e) {
-            log.error("解析响应失败: {}", response, e);
-            throw new RuntimeException("解析 AI 响应失败");
+            log.error("Claude API call failed", e);
+            throw new RuntimeException("AI service call failed: " + e.getMessage());
         }
     }
 
     @Override
     public String getProviderName() {
-        return "minimax";
+        return "claude";
+    }
+
+    private String parseResponse(String response) {
+        try {
+            JsonNode root = objectMapper.readTree(response);
+            JsonNode content = root.path("content");
+            if (content.isArray() && content.size() > 0) {
+                return content.get(0).path("text").asText();
+            }
+            return "No valid response";
+        } catch (Exception e) {
+            log.error("Failed to parse response: {}", response, e);
+            throw new RuntimeException("Failed to parse AI response");
+        }
     }
 }

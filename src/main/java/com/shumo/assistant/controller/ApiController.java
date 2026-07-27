@@ -41,12 +41,18 @@ public class ApiController {
             request.setSessionId(conversationService.getOrCreateSession(null));
         }
 
+        String provider = request.getProvider();
+        if (provider == null || provider.isEmpty()) {
+            provider = "minimax";
+        }
+
         Conversation result = conversationService.sendMessage(
                 request.getSessionId(),
                 request.getUserInput(),
                 request.getImageData(),
                 request.getWordContent(),
-                request.getApiKey()
+                request.getApiKey(),
+                provider
         );
 
         return ResponseEntity.ok(result);
@@ -55,9 +61,11 @@ public class ApiController {
     @GetMapping("/apikey/{sessionId}")
     public ResponseEntity<Map<String, String>> getApiKey(@PathVariable String sessionId) {
         String apiKey = conversationService.getApiKey(sessionId).orElse("");
+        String provider = conversationService.getProvider(sessionId).orElse("minimax");
 
         Map<String, String> response = new HashMap<>();
         response.put("apiKey", apiKey != null ? apiKey : "");
+        response.put("provider", provider);
 
         return ResponseEntity.ok(response);
     }
@@ -79,6 +87,7 @@ public class ApiController {
         private String imageData;
         private String wordContent;
         private String apiKey;
+        private String provider;
 
         public String getSessionId() { return sessionId; }
         public void setSessionId(String sessionId) { this.sessionId = sessionId; }
@@ -90,5 +99,7 @@ public class ApiController {
         public void setWordContent(String wordContent) { this.wordContent = wordContent; }
         public String getApiKey() { return apiKey; }
         public void setApiKey(String apiKey) { this.apiKey = apiKey; }
+        public String getProvider() { return provider; }
+        public void setProvider(String provider) { this.provider = provider; }
     }
 }

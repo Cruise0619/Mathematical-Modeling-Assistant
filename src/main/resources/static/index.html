@@ -747,11 +747,17 @@
   <div class="modal-overlay" id="modalOverlay">
     <div class="modal">
       <h3>API Key 设置</h3>
-      <label class="modal-label">Minimax API Key</label>
-      <input type="password" class="modal-input" id="apiKeyInput" placeholder="eyJhbGciOiJ...">
-      <p class="modal-hint">
-        您的 API Key 仅存储在服务器数据库中。<br>
-        请从 Minimax 开放平台获取 API Key。
+      <label class="modal-label">AI 提供商</label>
+      <select class="modal-input" id="providerSelect" style="margin-bottom: 12px; cursor: pointer;">
+        <option value="minimax">Minimax</option>
+        <option value="openai">OpenAI (GPT-4o)</option>
+        <option value="claude">Claude (3.5 Sonnet)</option>
+        <option value="deepseek">DeepSeek</option>
+      </select>
+      <label class="modal-label" id="apiKeyLabel">API Key</label>
+      <input type="password" class="modal-input" id="apiKeyInput" placeholder="输入 API Key...">
+      <p class="modal-hint" id="apiKeyHint">
+        您的 API Key 仅存储在服务器数据库中。
       </p>
       <div class="modal-actions">
         <button class="modal-btn modal-btn-secondary" id="cancelBtn">取消</button>
@@ -792,10 +798,18 @@
 
     let sessionId = localStorage.getItem('sessionId') || '';
     let apiKey = '';
+    let provider = 'minimax';
     let currentTab = 'text';
     let uploadedImage = null;
     let uploadedWord = null;
     let wordTextContent = '';
+
+    const providerHints = {
+      minimax: '请从 Minimax 开放平台获取 API Key',
+      openai: '请从 OpenAI 平台获取 API Key',
+      claude: '请从 Anthropic 平台获取 API Key',
+      deepseek: '请从 DeepSeek 平台获取 API Key'
+    };
 
     // Initialize
     async function init() {
@@ -815,6 +829,7 @@
           if (resp.ok) {
             const data = await resp.json();
             apiKey = data.apiKey || '';
+            provider = data.provider || 'minimax';
           }
         } catch (e) {
           // Session invalid, create new one
@@ -914,8 +929,19 @@
     }
 
     // Settings Modal
+    const providerSelect = document.getElementById('providerSelect');
+    const apiKeyLabel = document.getElementById('apiKeyLabel');
+    const apiKeyHint = document.getElementById('apiKeyHint');
+
+    providerSelect.addEventListener('change', () => {
+      const p = providerSelect.value;
+      apiKeyHint.textContent = providerHints[p] || '';
+    });
+
     settingsBtn.addEventListener('click', () => {
       apiKeyInput.value = apiKey;
+      providerSelect.value = provider;
+      apiKeyHint.textContent = providerHints[provider] || '';
       modalOverlay.classList.add('visible');
     });
 
@@ -927,6 +953,7 @@
       const key = apiKeyInput.value.trim();
       if (key) {
         apiKey = key;
+        provider = providerSelect.value;
         modalOverlay.classList.remove('visible');
       }
     });
@@ -1109,7 +1136,8 @@
             userInput: text,
             imageData: imageData,
             wordContent: wordContent,
-            apiKey
+            apiKey,
+            provider
           })
         });
 
