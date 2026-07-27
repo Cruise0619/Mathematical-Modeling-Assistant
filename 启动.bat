@@ -1,5 +1,5 @@
 @echo off
-title Math Modeling Assistant
+title Math Modeling Assistant - Starting...
 cd /d "%~dp0"
 
 :: Check Java
@@ -18,21 +18,23 @@ if not exist "target\assistant-1.0.0.jar" (
 )
 
 :: Kill existing process on port 8080
+echo [INFO] Checking for existing processes on port 8080...
 for /f "tokens=5" %%a in ('netstat -ano ^| findstr :8080 ^| findstr LISTENING') do (
+    echo [INFO] Stopping existing process %%a
     taskkill //F //PID %%a >nul 2>&1
 )
 timeout /t 1 >nul
 
 :: Clean database locks
 if exist "data\shumodb.lock.db" del "data\shumodb.lock.db" >nul 2>&1
-if exist "data\shumodb.mv.db" (
-    attrib -r "data\shumodb.mv.db" >nul 2>&1
-)
 
-:: Start server
-echo [INFO] Starting Math Modeling Assistant...
-start http://localhost:8080
-start /min java -jar "%~dp0target\assistant-1.0.0.jar"
-timeout /t 3 >nul
-echo [OK] Server started. Visit http://localhost:8080
-pause
+:: Start server with console output
+echo [INFO] ========================================
+echo [INFO]   Math Modeling Assistant
+echo [INFO] ========================================
+echo [INFO] Starting server on http://localhost:8080
+echo [INFO] Press Ctrl+C to stop the server
+echo [INFO] ========================================
+echo.
+
+java -jar "%~dp0target\assistant-1.0.0.jar"
