@@ -23,7 +23,23 @@ for /f "tokens=5" %%a in ('netstat -ano ^| findstr :8080 ^| findstr LISTENING') 
     echo [INFO] Stopping existing process %%a
     taskkill //F //PID %%a >nul 2>&1
 )
-timeout /t 2 >nul
+
+:: Wait for port to be released
+echo [INFO] Waiting for port 8080 to be released...
+set /a counter=0
+:wait_loop
+timeout /t 1 >nul
+set /a counter+=1
+netstat -ano | findstr :8080 | findstr LISTENING >nul 2>&1
+if not errorlevel 1 (
+    if %counter% LSS 10 goto wait_loop
+)
+netstat -ano | findstr :8080 | findstr LISTENING >nul 2>&1
+if not errorlevel 1 (
+    echo [WARN] Port 8080 still in use, trying anyway...
+) else (
+    echo [INFO] Port 8080 is free.
+)
 
 :: Clean database lock files
 echo [INFO] Cleaning database locks...
