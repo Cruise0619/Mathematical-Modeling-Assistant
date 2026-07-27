@@ -5,16 +5,25 @@
 ## 功能特性
 
 - **多输入方式**：支持文字输入、图片上传、Word 文档
-- **AI 智能分析**：基于 Minimax 大模型进行题目分析
+- **多 AI 提供商**：支持 Minimax、OpenAI、Claude、DeepSeek
 - **公式渲染**：支持 LaTeX 数学公式渲染
 - **数据持久化**：对话记录保存在本地数据库，关闭后不丢失
 - **会话管理**：每个浏览器独立会话，历史记录可追溯
+
+## 支持的 AI 提供商
+
+| 提供商 | 模型 | API 格式 |
+|--------|------|----------|
+| **Minimax** | MiniMax-Text-01 | OpenAI 兼容 |
+| **OpenAI** | GPT-4o | OpenAI 标准 |
+| **Claude** | 3.5 Sonnet | Anthropic 格式 |
+| **DeepSeek** | deepseek-chat | OpenAI 兼容 |
 
 ## 技术栈
 
 - **后端**：Spring Boot 3.2 + JPA + H2 数据库
 - **前端**：原生 HTML/CSS/JavaScript
-- **AI**：Minimax API (MiniMax-Text-01)
+- **AI**：Minimax / OpenAI / Claude / DeepSeek
 - **公式**：KaTeX
 - **构建**：Maven
 
@@ -47,7 +56,7 @@ java -jar target/assistant-1.0.0.jar
 
 ## 使用方法
 
-1. 打开应用后，点击右上角「设置 API Key」输入你的 Minimax API Key
+1. 打开应用后，点击右上角「设置 API Key」选择 AI 提供商并输入 API Key
 2. 选择输入方式：
    - **文字输入**：直接输入题目
    - **图片上传**：拖拽或点击上传题目截图
@@ -71,8 +80,13 @@ src/main/java/com/shumo/assistant/
 │   ├── ConversationRepository.java
 │   └── UserSessionRepository.java
 └── service/
+    ├── AiService.java                      # AI 服务接口
+    ├── AiServiceFactory.java               # AI 服务工厂
     ├── ConversationService.java            # 业务逻辑
-    └── MinimaxService.java                 # AI API 调用
+    ├── MinimaxService.java                 # Minimax AI
+    ├── OpenAiService.java                  # OpenAI AI
+    ├── ClaudeService.java                  # Claude AI
+    └── DeepseekService.java                # DeepSeek AI
 ```
 
 ## API 接口
